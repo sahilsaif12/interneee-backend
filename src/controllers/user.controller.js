@@ -65,7 +65,6 @@ const registerUser = asyncHandler(async (req, res) => {
 const userVerifed = asyncHandler(async (req, res) => {
     const { id } = req.body
     const { accessToken, refreshToken } = await generateAccessAndRefreshToken(id)
-
     res.status(200)
         .cookie("accessToken", accessToken, options)
         .cookie("refreshToken", refreshToken, options)
