@@ -12,7 +12,7 @@ const generateAccessAndRefreshToken = async (userId) => {
 
     const user = await User.findById(userId);
     if (!user) {
-        throw new ApiError(404,"wrong user id/ user not found")
+        throw new ApiError(404, "wrong user id/ user not found")
     }
     const accessToken = await user.generateAccessToken()
     const refreshToken = await user.generateRefreshToken()
@@ -25,7 +25,7 @@ const generateAccessAndRefreshToken = async (userId) => {
 }
 
 const options = {
-    httpOnly: true,
+    httpOnly: false,
     secure: true
 }
 
@@ -55,136 +55,251 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     let otp = await sendMail(email)
-    
+
     res.status(200)
         .json(
             new ApiResponse(200, { createdUser, otp }, "user registered successfully")
         )
 })
 
-const userVerifed=asyncHandler(async(req, res) => {
-    const {id}=req.body
+const userVerifed = asyncHandler(async (req, res) => {
+    const { id } = req.body
     const { accessToken, refreshToken } = await generateAccessAndRefreshToken(id)
 
     res.status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
-    .json({accessToken,refreshToken})
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json({ accessToken, refreshToken })
 })
 
-const loginUser=asyncHandler(async (req, res) => {
-    const {email} =  req.body
-    if(!(email)) {
-        throw new ApiError(400,"email is required ")
+const loginUser = asyncHandler(async (req, res) => {
+    const { email } = req.body
+    if (!(email)) {
+        throw new ApiError(400, "email is required ")
     }
 
-    const user=await User.findOne({
+    const user = await User.findOne({
         email
     })
 
     if (!user) {
-        throw new ApiError(404,"User not found with this email id ")
-        
+        throw new ApiError(404, "User not found with this email id ")
+
     }
 
     let otp = await sendMail(email)
 
     res.status(200)
-    .json(
-        new ApiResponse(200,{user,otp},"user logged in successfully")
-    )
+        .json(
+            new ApiResponse(200, { user, otp }, "user logged in successfully")
+        )
 })
 
 
-const logoutUser=asyncHandler(async(req,res) => {
+const logoutUser = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(
         req.user?._id,
         {
-            $unset:{
-                refreshToken:''
+            $unset: {
+                refreshToken: ''
             }
         },
-        {new:true}
+        { new: true }
     )
 
     res.status(200)
-    .clearCookie("accessToken",options)
-    .clearCookie("refreshToken",options)
-    .json(
-        new ApiResponse(200,{},"user logged out successfully")
-    )
-    
+        .clearCookie("accessToken", options)
+        .clearCookie("refreshToken", options)
+        .json(
+            new ApiResponse(200, {}, "user logged out successfully")
+        )
+
 })
 
 
-const updateCoins=asyncHandler(async(req, res) => {
-    const {newCoins}=req.body
-
-    const coins=await User.findByIdAndUpdate(
-        req.user?._id,
-        {
-            $inc:{coins:newCoins}
-        },
-        {new:true}
-    )
+const updateCoins = asyncHandler(async (req, res) => {
+    const { newCoins, op } = req.body
+    let coins
+    if(op=="dec"){
+        coins = await User.findByIdAndUpdate(
+            req.user?._id,
+            {
+                $inc: { coins: -newCoins }
+            },
+            { new: true }
+        )
+    }else{
+        coins = await User.findByIdAndUpdate(
+            req.user?._id,
+            {
+                $inc: { coins: newCoins }
+            },
+            { new: true }
+        )
+    }
 
     res.status(200)
-    .json(
-        new ApiResponse(200,{CurrentCoins:coins.coins},"coins updated successfully")
-    )
+        .json(
+            new ApiResponse(200, { CurrentCoins: coins.coins }, "coins updated successfully")
+        )
 })
 
-const userAllDetails=asyncHandler(async(req, res) =>{
+const userAllDetails = asyncHandler(async (req, res) => {
+
+    // console.log(req.user?._id);
+    // const allDetails=await User.aggregate([
+    //     {
+    //         $match:{
+    //             _id:req.user?._id
+    //         }
+    //     },
+    //     {
+    //         $lookup:{
+    //             from:"personaldetails",
+    //             foreignField:"_id",
+    //             localField:"personal_details",
+    //             as:"personal_details",
+    //             pipeline:[
+    //                 {
+    //                     $project:{
+    //                         owner:0
+    //                     }
+    //                 }
+    //             ]
+    //         }
+    //     },
+    //     {
+    //         $unwind:"$personal_details"
+    //     },
+    //     {
+    //         $lookup:{
+    //             from:"educationaldetails",
+    //             foreignField:"_id",
+    //             localField:"educational_details",
+    //             as:"educational_details",
+    //             pipeline:[
+    //                 {
+    //                     $project:{
+    //                         owner:0
+    //                     }
+    //                 }
+    //             ]
+    //         }
+    //     },
+    //     {
+    //         $unwind:"$educational_details"
+    //     },
+    //     {
+    //         $lookup:{
+    //             from:"projectdetails",
+    //             foreignField:"_id",
+    //             localField:"project_details",
+    //             as:"project_details",
+    //             pipeline:[
+    //                 {
+    //                     $project:{
+    //                         owner:0
+    //                     }
+    //                 }
+    //             ]
+    //         }
+    //     },
+    //     {
+    //         $unwind:"$project_details"
+    //     },
+    //     {
+    //         $lookup:{
+    //             from:"experiencedetails",
+    //             foreignField:"_id",
+    //             localField:"experience_details",
+    //             as:"experience_details",
+    //             pipeline:[
+    //                 {
+    //                     $project:{
+    //                         owner:0
+    //                     }
+    //                 }
+    //             ]
+    //         }
+    //     },
+    //     {
+    //         $project:{
+    //             refreshToken:0
+    //         }
+    //     }
+
+    // ])
     
-    const allDetails=await User.aggregate([
+    const allDetails = await User.aggregate([
         {
-            $match:{
-                _id:new mongoose.Types.ObjectId(req.user?._id)
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user?._id)
             }
         },
         {
-            $lookup:{
-                from:"personaldetails",
-                foreignField:"_id",
-                localField:"personal_details",
-                as:"personal_details",
-                pipeline:[
+            $lookup: {
+                from: "personaldetails",
+                let: { personal_details: "$personal_details" },
+                pipeline: [
                     {
-                        $project:{
-                            owner:0
+                        $match: {
+                            $expr: {
+                                $eq: ["$_id", "$$personal_details"]
+                            }
                         }
-                    }
-                ]
+                    },
+                ],
+                as: "personal_details"
             }
         },
         {
-            $lookup:{
-                from:"educationaldetails",
-                foreignField:"_id",
-                localField:"educational_details",
-                as:"educational_details",
-                pipeline:[
-                    {
-                        $project:{
-                            owner:0
-                        }
-                    }
-                ]
+            $unwind: {
+                path: "$personal_details",
+                preserveNullAndEmptyArrays: true // Preserve empty arrays
             }
         },
         {
-            $lookup:{
-                from:"projectdetails",
-                foreignField:"_id",
-                localField:"project_details",
-                as:"project_details",
-                pipeline:[
+            $lookup: {
+                from: "educationaldetails",
+                let: { educational_details: "$educational_details" },
+                pipeline: [
                     {
-                        $project:{
-                            owner:0
+                        $match: {
+                            $expr: {
+                                $eq: ["$_id", "$$educational_details"]
+                            }
                         }
-                    }
-                ]
+                    },
+                ],
+                as: "educational_details"
+            }
+        },
+        {
+            $unwind: {
+                path: "$educational_details",
+                preserveNullAndEmptyArrays: true // Preserve empty arrays
+            }
+        },
+        {
+            $lookup: {
+                from: "projectdetails",
+                let: { project_details: "$project_details" },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $eq: ["$_id", "$$project_details"]
+                            }
+                        }
+                    },
+                ],
+                as: "project_details"
+            }
+        },
+        {
+            $unwind: {
+                path: "$project_details",
+                preserveNullAndEmptyArrays: true // Preserve empty arrays
             }
         },
         {
@@ -202,62 +317,83 @@ const userAllDetails=asyncHandler(async(req, res) =>{
                 ]
             }
         },
+        // {
+        //     $lookup:{
+        //         from:"jobs",
+        //         foreignField:"_id",
+        //         localField:"applied_jobs",
+        //         as:"applied_jobs",
+        //         pipeline:[
+        //             {
+        //                 $project:{
+        //                     id:0
+        //                 }
+        //             }
+        //         ]
+        //     }
+        // },
         {
             $project:{
                 refreshToken:0
             }
         }
-        
-    ])
+    ]);
 
+
+    // console.log(allDetails);
     res.status(200)
-    .json(
-        new ApiResponse(200,allDetails[0],"all details fetched successfully")
-    )
+        .json(
+            new ApiResponse(200, allDetails[0], "all details fetched successfully")
+        )
 })
 
 
-const refreshAccessToken =asyncHandler(async(req, res)=>{
-    const incomingRefreshToken=req.cookies?.refreshToken || req.body?.refreshToken
-
+const refreshAccessToken = asyncHandler(async (req, res) => {
+    const incomingRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken
+    // console.log(incomingRefreshToken);
     if (!incomingRefreshToken) {
-        throw new ApiError(400,"no refresh token found")
+        throw new ApiError(400, "no refresh token found")
     }
 
-    let userId=null
-    await jwt.verify(incomingRefreshToken,process.env.REFRESH_TOKEN_SECRET_KEY,(err,decoded)=>{
+    let userId = null
+    await jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET_KEY, (err, decoded) => {
         if (err) {
             if (err.name === "TokenExpiredError") {
-                throw new ApiError(400,"Given refresh token is expired")
-            }else{
-                throw new ApiError(401,"Unauthorized token",[err.message])
+                throw new ApiError(400, "Given refresh token is expired")
+            } else {
+                throw new ApiError(401, "Unauthorized token", [err.message])
             }
-        }else{
-            userId=decoded?._id
-            
+        } else {
+            userId = decoded?._id
+
         }
     })
-    
-    const user=await User.findById(userId)
+
+    const user = await User.findById(userId)
     if (!user) {
-        throw new ApiError(400,"invalid refresh token")
+        throw new ApiError(400, "invalid refresh token")
     }
 
-    if (incomingRefreshToken!==user?.refreshToken) {
-        throw new ApiError(401,"refresh token not matching")
-    }
+    // const decodedCookieToken = await jwt.decode(incomingRefreshToken);
+    // const decodedDbToken = await jwt.decode(user?.refreshToken);
 
-    const {accessToken, refreshToken}=await generateAccessAndRefreshToken(user?._id)
-    
+    //  if( decodedCookieToken._id!==decodedDbToken._id) {
+    //     console.log(decodedCookieToken);
+    //     console.log(decodedDbToken);
+    //     throw new ApiError(401,"refresh token not matching")
+    // }
+
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user?._id)
+
     res.status(200)
-    .cookie("accessToken",accessToken,options)
-    .cookie("refreshToken",refreshToken,options)
-    .json(
-        new ApiResponse(
-            200,
-            {accessToken,refreshToken},
-            "tokens are updated successfully")
-    )
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json(
+            new ApiResponse(
+                200,
+                { accessToken, refreshToken },
+                "tokens are updated successfully")
+        )
 })
 
 

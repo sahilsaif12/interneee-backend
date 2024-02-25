@@ -6,7 +6,7 @@ import { User } from "../models/user.model.js";
 
 const allJobs=asyncHandler(async(req, res)=>{
     const {page=1 , limit=10}=req.query
-    
+    // console.log(page);
     // const jobCollection = mongoose.connection.db.collection("jobs");
     const jobs = await Job.find().skip((page-1)*limit).limit(limit)
     // console.log(jobs);
@@ -18,8 +18,8 @@ const allJobs=asyncHandler(async(req, res)=>{
 })
 
 const jobApply=asyncHandler(async(req, res)=>{
-    const {jobId}=req.query
-
+    const {jobId}=req.params
+    // console.log(jobId);
     await User.findByIdAndUpdate(
         req.user?._id,
         {
@@ -33,7 +33,7 @@ const jobApply=asyncHandler(async(req, res)=>{
 
     res.status(200)
     .json(
-        new ApiResponse(200,{},"jobs applied successfully")
+        new ApiResponse(200,{_id:jobId},"jobs applied successfully")
     )
     
 })
@@ -44,11 +44,26 @@ const appliedJobs=asyncHandler(async(req, res)=>{
         {
             $match:{_id:new mongoose.Types.ObjectId(req.user?._id)}
         },
+        // {
+        //     $lookup:{
+        //         from:"jobs",
+        //         localField:"applied_jobs",
+        //         foreignField:"_id",
+        //         as:"applied_jobs",
+        //         pipeline:[
+        //             {
+        //                 $project:{
+        //                     id:0
+        //                 }
+        //             }
+        //         ]
+        //     }
+        // },
         {
             $lookup:{
                 from:"jobs",
-                localField:"applied_jobs",
                 foreignField:"_id",
+                localField:"applied_jobs",
                 as:"applied_jobs",
                 pipeline:[
                     {
@@ -61,7 +76,8 @@ const appliedJobs=asyncHandler(async(req, res)=>{
         },
         {
             $project:{
-                applied_jobs:1
+                applied_jobs:1,
+                coins:1
             }
         }
     ])

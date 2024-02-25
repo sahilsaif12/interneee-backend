@@ -10,6 +10,7 @@ import { ExperienceDetail } from "../models/Experience.model.js";
 import { User } from "../models/user.model.js";
 
 const updatePersonal=asyncHandler(async(req, res) => {
+    // console.log(req.files);
     const{mobile, linkedInLink, githubLink}=req.body
     const avatarLocalPath=req.files.avatar?.length>0? req.files.avatar[0].path : false
     const resumeLocalPath=req.files.resume?.length>0? req.files.resume[0].path : false
@@ -22,9 +23,9 @@ const updatePersonal=asyncHandler(async(req, res) => {
         owner:req.user?._id
     }
 
-    if (mobile.trim()!="") updateFields.mobile = mobile
-    if (linkedInLink.trim()!="") updateFields.linkedInLink = linkedInLink
-    if (githubLink.trim()!="") updateFields.githubLink = githubLink
+    if (mobile?.trim()!="") updateFields.mobile = mobile
+    if (linkedInLink?.trim()!="") updateFields.linkedInLink = linkedInLink
+    if (githubLink?.trim()!="") updateFields.githubLink = githubLink
 
 
     if (avatarLocalPath) {
@@ -38,17 +39,12 @@ const updatePersonal=asyncHandler(async(req, res) => {
    
     
     const personal=await PersonalDetail.find({owner:updateFields.owner})
-// console.log(personal);
     let details
 
     if (personal.length==0) {
-        console.log("here");
-        // updateFields[owner]=owner
-
         details=await PersonalDetail.create(updateFields)
     }
     else{
-        // console.log("here");
         details=await PersonalDetail.findOneAndUpdate(
             {owner:req.user?._id},
             {
@@ -56,7 +52,6 @@ const updatePersonal=asyncHandler(async(req, res) => {
             },
             {new :true}
             )
-        // console.log(details);
     }
     
     await User.findByIdAndUpdate(
@@ -68,7 +63,7 @@ const updatePersonal=asyncHandler(async(req, res) => {
         }
     )
     if (!details) {
-        console.log(details);
+        // console.log(details);
         throw new ApiError(500, "something server problem while updating in database")
     }
 
@@ -90,17 +85,16 @@ const updateEducational=asyncHandler(async(req, res) => {
         owner:req.user?._id
     }
 
-    if (instituteType.trim()!="") updateFields.instituteType = instituteType
-    if (instituteName.trim()!="") updateFields.instituteName = instituteName
-    if (startDate.trim()!="") updateFields.startDate = startDate
-    if (endDate.trim()!="") updateFields.endDate = endDate
+    if (instituteType?.trim()!="") updateFields.instituteType = instituteType
+    if (instituteName?.trim()!="") updateFields.instituteName = instituteName
+    if (startDate?.trim()!="") updateFields.startDate = startDate
+    if (endDate?.trim()!="") updateFields.endDate = endDate
 
 
     const educational=await EducationalDetail.find({owner:updateFields.owner})
     let details
 
     if (educational.length==0) {
-        console.log("here");
 
         details=await EducationalDetail.create(updateFields)
     }
@@ -115,7 +109,7 @@ const updateEducational=asyncHandler(async(req, res) => {
     }
     
     if (!details) {
-        console.log(details);
+        // console.log(details);
         throw new ApiError(500, "something server problem while updating in database")
     }
 
@@ -147,30 +141,27 @@ const updateExperience =asyncHandler(async(req, res) => {
         owner:req.user?._id
     }
 
-    if (experienceType.trim()!="") updateFields.experienceType = experienceType
-    if (companyName.trim()!="") updateFields.companyName = companyName
-    if (companyWebsite.trim()!="") updateFields.companyWebsite = companyWebsite
-    if (role.trim()!="") updateFields.role = role
-    if (startDate.trim()!="") updateFields.startDate = startDate
-    if (endDate.trim()!="") updateFields.endDate = endDate
+    if (experienceType?.trim()!="") updateFields.experienceType = experienceType
+    if (companyName?.trim()!="") updateFields.companyName = companyName
+    if (companyWebsite?.trim()!="") updateFields.companyWebsite = companyWebsite
+    if (role?.trim()!="") updateFields.role = role
+    if (startDate?.trim()!="") updateFields.startDate = startDate
+    if (endDate?.trim()!="") updateFields.endDate = endDate
 
     // if (coverLetterLocalPath) {
     //     let coverLetter=await uploadOnCloudinary(coverLetterLocalPath)
     //     updateFields.coverLetter=coverLetter.url
     // }
 
-    console.log("here");
     const experience=await ExperienceDetail.findOne({
         $and: [
             { _id: new mongoose.Types.ObjectId(ex_id)  },
             { owner: updateFields.owner }
         ]
     })
-    console.log("here2");
     
     let details
     if (!experience || experience.length==0) {
-        console.log("here3");
         details=await ExperienceDetail.create(updateFields)
         
         await User.findByIdAndUpdate(
@@ -200,7 +191,7 @@ const updateExperience =asyncHandler(async(req, res) => {
     }
     
     if (!details) {
-        console.log(details);
+        // console.log(details);
         throw new ApiError(500, "something server problem while updating in database")
     }
 
@@ -224,10 +215,10 @@ const updateProject=asyncHandler(async(req, res) => {
         owner:req.user?._id
     }
 
-    if (name.trim()!="") updateFields.name = name
-    if (desc.trim()!="") updateFields.desc = desc
-    if (projectType.trim()!="") updateFields.projectType = projectType
-    if (projectLink.trim()!="") updateFields.projectLink = projectLink
+    if (name?.trim()!="") updateFields.name = name
+    if (desc?.trim()!="") updateFields.desc = desc
+    if (projectType?.trim()!="") updateFields.projectType = projectType
+    if (projectLink?.trim()!="") updateFields.projectLink = projectLink
 
 
     const project=await ProjectDetail.find({owner:updateFields.owner})
@@ -247,7 +238,7 @@ const updateProject=asyncHandler(async(req, res) => {
     }
     
     if (!details) {
-        console.log(details);
+        // console.log(details);
         throw new ApiError(500, "something server problem while updating in database")
     }
 
